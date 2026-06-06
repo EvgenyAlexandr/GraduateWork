@@ -4,73 +4,107 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+  <!-- Базовая конфигурация Spring Boot: версии зависимостей, плагины, BOM -->
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
     <version>2.7.15</version>
-    <relativePath/> <!-- lookup parent from repository -->
+    <relativePath/> <!-- Искать parent в локальном репозитории Maven, не в ../pom.xml -->
   </parent>
 
   <groupId>ru.skypro</groupId>
   <artifactId>ads</artifactId>
-  <version>0.0.1-SNAPSHOT</version
-  >
+  <version>0.0.1-SNAPSHOT</version>
   <name>Ads application</name>
-  <description>Application for managing ads</description>
+  <description>Backend платформы по перепродаже вещей (дипломный проект SkyPro)</description>
 
   <properties>
+    <!-- Минимальная версия JDK по требованиям шаблона -->
     <java.version>11</java.version>
+    <!-- SpringDoc 1.x совместим с Spring Boot 2.7 -->
+    <springdoc.version>1.6.15</springdoc.version>
+    <!-- Совместимость Lombok с JDK 21 при сборке -->
+    <lombok.version>1.18.34</lombok.version>
   </properties>
 
   <dependencies>
+
+    <!-- === Основной функционал приложения === -->
+
+    <!-- REST API: контроллеры, сериализация JSON -->
     <!--suppress VulnerableLibrariesLocal -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
+
+    <!-- JPA и Hibernate: сущности, репозитории (Этап II) -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-      <scope>runtime</scope>
-    </dependency>
+
+    <!-- Авторизация и аутентификация (Этап II) -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
     </dependency>
-    <!--suppress VulnerableLibrariesLocal -->
+
+    <!-- Автогенерация /v3/api-docs и Swagger UI из аннотаций контроллеров -->
     <dependency>
-      <groupId>com.h2database</groupId>
-      <artifactId>h2</artifactId>
-      <scope>test</scope>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-ui</artifactId>
+      <version>${springdoc.version}</version>
     </dependency>
+
+    <!-- Сокращение boilerplate-кода в DTO; только на этапе компиляции -->
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <optional>true</optional>
     </dependency>
+
+    <!-- === Базы данных === -->
+
+    <!-- Продакшен-БД; драйвер подключается только при запуске -->
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- In-memory БД для локального запуска без PostgreSQL -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- === Тестирование === -->
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-test</artifactId>
       <scope>test</scope>
     </dependency>
+
   </dependencies>
 
   <build>
     <plugins>
+      <!-- Сборка исполняемого JAR и repackage зависимостей -->
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
         <configuration>
           <excludes>
+            <!-- Lombok не нужен в финальном JAR -->
             <exclude>
               <groupId>org.projectlombok</groupId>
               <artifactId>lombok</artifactId>
