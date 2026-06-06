@@ -13,18 +13,26 @@ import ru.skypro.homework.dto.Role;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
+/**
+ * Конфигурация Spring Security: Basic Auth и правила доступа к эндпоинтам.
+ */
 @Configuration
 public class WebSecurityConfig {
 
     private static final String[] AUTH_WHITELIST = {
             "/swagger-resources/**",
+            "/swagger-ui/**",
             "/swagger-ui.html",
-            "/v3/api-docs",
+            "/v3/api-docs/**",
             "/webjars/**",
             "/login",
-            "/register"
+            "/register",
+            "/ads"
     };
 
+    /**
+     * Тестовый пользователь для проверки защищённых эндпоинтов через Basic Auth.
+     */
     @Bean
     public InMemoryUserDetailsManager userDetailsService(PasswordEncoder passwordEncoder) {
         UserDetails user =
@@ -58,5 +66,4 @@ public class WebSecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 }
