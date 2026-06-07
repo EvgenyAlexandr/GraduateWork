@@ -77,7 +77,7 @@ docker run -p 3000:3000 --rm ghcr.io/dmitry-bizin/front-react-avito:v1.21
 | Пароль | `password` |
 
 Примеры запросов — в файле [example-requests.http](example-requests.http).
-
+  
 ## Структура проекта
 
 ```
