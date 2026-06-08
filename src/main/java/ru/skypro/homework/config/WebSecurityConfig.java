@@ -19,6 +19,7 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @Configuration
 public class WebSecurityConfig {
 
+    /** Пути, доступные без аутентификации (Swagger, регистрация, публичный список объявлений). */
     private static final String[] AUTH_WHITELIST = {
             "/swagger-resources/**",
             "/swagger-ui/**",
@@ -45,6 +46,9 @@ public class WebSecurityConfig {
         return new InMemoryUserDetailsManager(user);
     }
 
+    /**
+     * Настраивает цепочку фильтров: отключает CSRF, задаёт правила доступа и включает Basic Auth.
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf()
@@ -62,6 +66,9 @@ public class WebSecurityConfig {
         return http.build();
     }
 
+    /**
+     * Кодировщик паролей BCrypt для хранения и проверки учётных данных.
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

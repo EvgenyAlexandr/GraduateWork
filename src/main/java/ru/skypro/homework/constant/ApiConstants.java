@@ -76,6 +76,15 @@ public final class ApiConstants {
     /** Пустой массив байт для заглушки ответа при обновлении изображения (Этап I). */
     public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
+    /** Максимальная длина хэша пароля в БД (BCrypt). */
+    public static final int PASSWORD_HASH_MAX_LENGTH = 255;
+
+    /** Максимальная длина пути к файлу изображения в БД. */
+    public static final int IMAGE_PATH_MAX_LENGTH = 255;
+
+    /** Максимальная длина телефона в БД. */
+    public static final int PHONE_MAX_LENGTH = 20;
+
     private ApiConstants() {
     }
 }

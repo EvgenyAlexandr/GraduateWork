@@ -11,6 +11,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class HomeworkApplication {
 
+    /**
+     * Запускает Spring Boot-приложение.
+     *
+     * @param args аргументы командной строки
+     */
     public static void main(String[] args) {
         SpringApplication.run(HomeworkApplication.class, args);
     }
