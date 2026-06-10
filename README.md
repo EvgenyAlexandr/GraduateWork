@@ -1,5 +1,5 @@
 # Ads — Backend платформы по перепродаже вещей
-
+  
 Backend-приложение для платформы по перепродаже вещей. Дипломный проект курса Java-разработчик SkyPro.
 
 API реализовано по [OpenAPI-спецификации](openapi.yaml) и совместимо с [готовым фронтендом](https://github.com/skypro-backend/example-for-graduate-work).
