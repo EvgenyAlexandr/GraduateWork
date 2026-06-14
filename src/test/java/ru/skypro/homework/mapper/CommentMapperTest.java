@@ -14,6 +14,9 @@ import ru.skypro.homework.entity.Ad;
 import ru.skypro.homework.entity.Comment;
 import ru.skypro.homework.entity.User;
 
+/**
+ * Unit-тесты {@link ru.skypro.homework.mapper.CommentMapper}, включая конвертацию даты в timestamp.
+ */
 class CommentMapperTest {
 
     private CommentMapper commentMapper;

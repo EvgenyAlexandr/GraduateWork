@@ -2,122 +2,80 @@ package ru.skypro.homework.service;
 
 import java.util.Optional;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import lombok.RequiredArgsConstructor;
 import ru.skypro.homework.dto.Register;
 import ru.skypro.homework.dto.UpdateUser;
 import ru.skypro.homework.entity.User;
-import ru.skypro.homework.mapper.UserMapper;
-import ru.skypro.homework.repository.UserRepository;
 
 /**
- * Сервис пользователей: маппинг Entity ↔ DTO и работа с репозиторием.
+ * Контракт сервиса пользователей: маппинг Entity ↔ DTO и работа с репозиторием.
  */
-@Service
-@RequiredArgsConstructor
-@Transactional(readOnly = true)
-public class UserService {
-
-    private final UserRepository userRepository;
-    private final UserMapper userMapper;
+public interface UserService {
 
     /**
      * Возвращает DTO пользователя по идентификатору.
-     *
-     * @param id первичный ключ пользователя
      */
-    public Optional<ru.skypro.homework.dto.User> getUserDto(Integer id) {
-        return userRepository.findById(id).map(userMapper::toDto);
-    }
+    Optional<ru.skypro.homework.dto.User> getUserDto(Integer id);
 
     /**
      * Возвращает DTO пользователя по email (логину).
-     *
-     * @param email адрес электронной почты
      */
-    public Optional<ru.skypro.homework.dto.User> getUserDtoByEmail(String email) {
-        return userRepository.findByEmail(email).map(userMapper::toDto);
-    }
+    Optional<ru.skypro.homework.dto.User> getUserDtoByEmail(String email);
 
     /**
-     * Ищет сущность пользователя по email для внутренней бизнес-логики.
-     *
-     * @param email адрес электронной почты
+     * Ищет сущность пользователя по email.
      */
-    public Optional<User> findEntityByEmail(String email) {
-        return userRepository.findByEmail(email);
-    }
+    Optional<User> findEntityByEmail(String email);
 
     /**
      * Ищет сущность пользователя по идентификатору.
-     *
-     * @param id первичный ключ пользователя
      */
-    public Optional<User> findEntityById(Integer id) {
-        return userRepository.findById(id);
-    }
+    Optional<User> findEntityById(Integer id);
 
     /**
      * Проверяет, занят ли email при регистрации.
-     *
-     * @param email адрес электронной почты
      */
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
+    boolean existsByEmail(String email);
 
     /**
-     * Создаёт нового пользователя из данных регистрации.
-     *
-     * @param register данные из тела запроса {@code POST /register}
-     * @return сохранённая сущность
+     * Создаёт пользователя с BCrypt-хешем пароля.
      */
-    @Transactional
-    public User createUser(Register register) {
-        User user = userMapper.toEntity(register);
-        return userRepository.save(user);
-    }
+    User createUser(Register register);
 
     /**
      * Обновляет профиль пользователя (имя, фамилия, телефон).
-     *
-     * @param id         первичный ключ пользователя
-     * @param updateUser новые значения полей профиля
-     * @return обновлённая сущность или пустой {@link Optional}, если пользователь не найден
      */
-    @Transactional
-    public Optional<User> updateUser(Integer id, UpdateUser updateUser) {
-        return userRepository.findById(id).map(user -> {
-            userMapper.updateEntityFromDto(updateUser, user);
-            return userRepository.save(user);
-        });
-    }
+    Optional<User> updateUser(Integer id, UpdateUser updateUser);
 
     /**
-     * Сохраняет или обновляет сущность пользователя (например, после смены пароля или аватара).
+     * Меняет пароль после проверки текущего.
+     *
+     * @return {@code false} при неверном текущем пароле или отсутствии пользователя
      */
-    @Transactional
-    public User save(User user) {
-        return userRepository.save(user);
-    }
+    boolean changePassword(String email, String currentPassword, String newPassword);
+
+    /**
+     * Сохраняет или обновляет сущность пользователя.
+     */
+    User save(User user);
 
     /**
      * Преобразует сущность в DTO для ответа API.
      */
-    public ru.skypro.homework.dto.User toDto(User user) {
-        return userMapper.toDto(user);
-    }
+    ru.skypro.homework.dto.User toDto(User user);
 
     /**
      * Формирует DTO обновления профиля из текущих данных сущности.
      */
-    public UpdateUser toUpdateUserDto(User user) {
-        UpdateUser updateUser = new UpdateUser();
-        updateUser.setFirstName(user.getFirstName());
-        updateUser.setLastName(user.getLastName());
-        updateUser.setPhone(user.getPhone());
-        return updateUser;
-    }
+    UpdateUser toUpdateUserDto(User user);
+
+    /**
+     * Сохраняет новый аватар пользователя на диск и обновляет путь в БД.
+     *
+     * @param id    идентификатор пользователя
+     * @param image файл изображения
+     * @return обновлённая сущность
+     */
+    User updateUserImage(Integer id, MultipartFile image);
 }

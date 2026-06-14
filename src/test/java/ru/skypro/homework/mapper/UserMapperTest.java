@@ -10,6 +10,9 @@ import org.mapstruct.factory.Mappers;
 import ru.skypro.homework.dto.Register;
 import ru.skypro.homework.dto.Role;
 
+/**
+ * Unit-тесты {@link ru.skypro.homework.mapper.UserMapper}.
+ */
 class UserMapperTest {
 
     private UserMapper userMapper;

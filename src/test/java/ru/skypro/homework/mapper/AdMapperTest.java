@@ -11,6 +11,11 @@ import ru.skypro.homework.dto.CreateOrUpdateAd;
 import ru.skypro.homework.entity.Ad;
 import ru.skypro.homework.entity.User;
 
+/**
+ * Unit-тесты {@link ru.skypro.homework.mapper.AdMapper}.
+ * <p>
+ * Проверяют корректность MapStruct-преобразований без Spring-контекста.
+ */
 class AdMapperTest {
 
     private AdMapper adMapper;
@@ -86,5 +91,26 @@ class AdMapperTest {
         assertThat(ad.getPrice()).isEqualTo(500);
         assertThat(ad.getAuthor()).isEqualTo(author);
         assertThat(ad.getPk()).isNull();
+    }
+
+    @Test
+    @DisplayName("toAdsDto формирует обёртку Ads со счётчиком и списком DTO")
+    void toAdsDto_mapsListWithCount() {
+        User author = new User();
+        author.setId(1);
+
+        Ad ad = new Ad();
+        ad.setPk(10);
+        ad.setTitle("Test ad");
+        ad.setDescription("Description");
+        ad.setPrice(1000);
+        ad.setImage("/images/ads/test.jpg");
+        ad.setAuthor(author);
+
+        var ads = adMapper.toAdsDto(java.util.List.of(ad));
+
+        assertThat(ads.getCount()).isEqualTo(1);
+        assertThat(ads.getResults()).hasSize(1);
+        assertThat(ads.getResults().get(0).getPk()).isEqualTo(10);
     }
 }

@@ -2,24 +2,33 @@ package ru.skypro.homework.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-import ru.skypro.homework.dto.Role;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+
+import lombok.RequiredArgsConstructor;
+import ru.skypro.homework.filter.BasicAuthCorsFilter;
+import ru.skypro.homework.security.CustomUserDetailsService;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
- * Конфигурация Spring Security: Basic Auth и правила доступа к эндпоинтам.
+ * Конфигурация Spring Security: Basic Auth, правила доступа к эндпоинтам.
+ * <p>
+ * Пользователи загружаются из PostgreSQL через {@link CustomUserDetailsService}.
  */
 @Configuration
+@RequiredArgsConstructor
 public class WebSecurityConfig {
 
-    /** Пути, доступные без аутентификации (Swagger, регистрация, публичный список объявлений). */
+    private final CustomUserDetailsService userDetailsService;
+    private final BasicAuthCorsFilter basicAuthCorsFilter;
+
+    /** Пути Swagger, регистрации и статики изображений, доступные без аутентификации. */
     private static final String[] AUTH_WHITELIST = {
             "/swagger-resources/**",
             "/swagger-ui/**",
@@ -28,42 +37,42 @@ public class WebSecurityConfig {
             "/webjars/**",
             "/login",
             "/register",
-            "/ads"
+            "/images/**"
     };
 
     /**
-     * Тестовый пользователь для проверки защищённых эндпоинтов через Basic Auth.
+     * Настраивает цепочку фильтров: публичный список объявлений, роли для изменения данных.
      */
     @Bean
-    public InMemoryUserDetailsManager userDetailsService(PasswordEncoder passwordEncoder) {
-        UserDetails user =
-                User.builder()
-                        .username("user@gmail.com")
-                        .password("password")
-                        .passwordEncoder(passwordEncoder::encode)
-                        .roles(Role.USER.name())
-                        .build();
-        return new InMemoryUserDetailsManager(user);
+    public SecurityFilterChain filterChain(HttpSecurity http, DaoAuthenticationProvider authProvider)
+            throws Exception {
+        http.csrf()
+                .disable()
+                .authorizeHttpRequests(authorization -> authorization
+                        .mvcMatchers(AUTH_WHITELIST).permitAll()
+                        .mvcMatchers(HttpMethod.GET, "/ads").permitAll()
+                        .mvcMatchers(HttpMethod.POST, "/ads/**").hasAnyRole("USER", "ADMIN")
+                        .mvcMatchers(HttpMethod.PATCH, "/ads/**").hasAnyRole("USER", "ADMIN")
+                        .mvcMatchers(HttpMethod.DELETE, "/ads/**").hasAnyRole("USER", "ADMIN")
+                        .mvcMatchers("/users/**").authenticated()
+                        .mvcMatchers(HttpMethod.GET, "/ads/**").authenticated()
+                        .anyRequest().authenticated())
+                .authenticationProvider(authProvider)
+                .addFilterBefore(basicAuthCorsFilter, BasicAuthenticationFilter.class)
+                .cors(withDefaults())
+                .httpBasic(withDefaults());
+        return http.build();
     }
 
     /**
-     * Настраивает цепочку фильтров: отключает CSRF, задаёт правила доступа и включает Basic Auth.
+     * Связывает {@link CustomUserDetailsService} с BCrypt для проверки паролей при Basic Auth.
      */
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf()
-                .disable()
-                .authorizeHttpRequests(
-                        authorization ->
-                                authorization
-                                        .mvcMatchers(AUTH_WHITELIST)
-                                        .permitAll()
-                                        .mvcMatchers("/ads/**", "/users/**")
-                                        .authenticated())
-                .cors()
-                .and()
-                .httpBasic(withDefaults());
-        return http.build();
+    public DaoAuthenticationProvider daoAuthenticationProvider(PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder);
+        return provider;
     }
 
     /**

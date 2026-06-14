@@ -1,125 +1,96 @@
 package ru.skypro.homework.service;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import lombok.RequiredArgsConstructor;
 import ru.skypro.homework.dto.Ads;
 import ru.skypro.homework.dto.CreateOrUpdateAd;
 import ru.skypro.homework.dto.ExtendedAd;
 import ru.skypro.homework.entity.Ad;
 import ru.skypro.homework.entity.User;
-import ru.skypro.homework.mapper.AdMapper;
-import ru.skypro.homework.repository.AdRepository;
+import ru.skypro.homework.exception.ResourceNotFoundException;
 
 /**
- * Сервис объявлений: маппинг Entity ↔ DTO и работа с репозиторием.
+ * Контракт сервиса объявлений: CRUD, маппинг Entity ↔ DTO и проверка прав доступа.
  */
-@Service
-@RequiredArgsConstructor
-@Transactional(readOnly = true)
-public class AdService {
-
-    private final AdRepository adRepository;
-    private final AdMapper adMapper;
+public interface AdService {
 
     /**
-     * Возвращает все объявления в формате {@link Ads} (список и общее количество).
+     * Возвращает все объявления в формате {@link Ads}.
      */
-    public Ads getAllAds() {
-        List<ru.skypro.homework.dto.Ad> results = adRepository.findAll().stream()
-                .map(adMapper::toDto)
-                .collect(Collectors.toList());
-        Ads ads = new Ads();
-        ads.setCount(results.size());
-        ads.setResults(results);
-        return ads;
-    }
+    Ads getAllAds();
 
     /**
-     * Возвращает объявления конкретного автора.
+     * Возвращает объявления указанного автора.
      *
-     * @param authorId идентификатор пользователя-автора
+     * @param authorId идентификатор пользователя
      */
-    public Ads getAdsByAuthorId(Integer authorId) {
-        List<ru.skypro.homework.dto.Ad> results = adRepository.findAllByAuthor_Id(authorId).stream()
-                .map(adMapper::toDto)
-                .collect(Collectors.toList());
-        Ads ads = new Ads();
-        ads.setCount(results.size());
-        ads.setResults(results);
-        return ads;
-    }
+    Ads getAdsByAuthorId(Integer authorId);
 
     /**
      * Возвращает расширенное DTO объявления с данными автора.
      *
      * @param id первичный ключ объявления
+     * @throws ResourceNotFoundException если объявление не найдено
      */
-    public Optional<ExtendedAd> getExtendedAd(Integer id) {
-        return adRepository.findById(id).map(adMapper::toExtendedDto);
-    }
+    ExtendedAd getExtendedAd(Integer id);
 
     /**
-     * Возвращает краткое DTO объявления по идентификатору.
+     * Проверяет существование объявления.
+     *
+     * @param id первичный ключ объявления
+     * @throws ResourceNotFoundException если объявление не найдено
+     */
+    void requireAdExists(Integer id);
+
+    /**
+     * Возвращает сущность объявления по идентификатору.
      *
      * @param id первичный ключ объявления
      */
-    public Optional<ru.skypro.homework.dto.Ad> getAdDto(Integer id) {
-        return adRepository.findById(id).map(adMapper::toDto);
-    }
+    Optional<Ad> findEntityById(Integer id);
 
     /**
-     * Создаёт объявление и сохраняет его в БД.
+     * Создаёт объявление, сохраняет изображение на диск и записывает путь в БД.
      *
      * @param createOrUpdateAd данные из запроса
-     * @param author           пользователь-автор объявления
+     * @param author           автор объявления
+     * @param image            файл изображения из multipart-запроса
      * @return сохранённая сущность
      */
-    @Transactional
-    public Ad createAd(CreateOrUpdateAd createOrUpdateAd, User author) {
-        Ad ad = adMapper.toEntity(createOrUpdateAd, author);
-        return adRepository.save(ad);
-    }
+    Ad createAd(CreateOrUpdateAd createOrUpdateAd, User author, MultipartFile image);
 
     /**
-     * Обновляет поля объявления по идентификатору.
+     * Обновляет поля объявления с проверкой прав владельца или ADMIN.
      *
      * @param id               первичный ключ объявления
-     * @param createOrUpdateAd новые значения title, description, price
-     * @return обновлённая сущность или пустой {@link Optional}, если объявление не найдено
+     * @param createOrUpdateAd новые значения
+     * @param currentUser      текущий пользователь
+     * @return обновлённая сущность
      */
-    @Transactional
-    public Optional<Ad> updateAd(Integer id, CreateOrUpdateAd createOrUpdateAd) {
-        return adRepository.findById(id).map(ad -> {
-            adMapper.updateEntityFromDto(createOrUpdateAd, ad);
-            return adRepository.save(ad);
-        });
-    }
+    Ad updateAd(Integer id, CreateOrUpdateAd createOrUpdateAd, User currentUser);
 
     /**
-     * Удаляет объявление по идентификатору.
+     * Удаляет объявление с проверкой прав владельца или ADMIN.
      *
-     * @param id первичный ключ объявления
-     * @return {@code true}, если объявление было удалено; {@code false}, если не найдено
+     * @param id          первичный ключ объявления
+     * @param currentUser текущий пользователь
      */
-    @Transactional
-    public boolean deleteAd(Integer id) {
-        if (!adRepository.existsById(id)) {
-            return false;
-        }
-        adRepository.deleteById(id);
-        return true;
-    }
+    void deleteAd(Integer id, User currentUser);
+
+    /**
+     * Заменяет изображение объявления и возвращает байты сохранённого файла.
+     *
+     * @param id          первичный ключ объявления
+     * @param image       новый файл изображения
+     * @param currentUser текущий пользователь
+     * @return содержимое файла для ответа {@code application/octet-stream}
+     */
+    byte[] updateAdImage(Integer id, MultipartFile image, User currentUser);
 
     /**
      * Преобразует сущность в краткое DTO для ответа API.
      */
-    public ru.skypro.homework.dto.Ad toDto(Ad ad) {
-        return adMapper.toDto(ad);
-    }
+    ru.skypro.homework.dto.Ad toDto(Ad ad);
 }

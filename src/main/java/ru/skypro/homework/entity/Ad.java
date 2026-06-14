@@ -53,7 +53,7 @@ public class Ad {
     @Column(nullable = false)
     private Integer price;
 
-    /** Путь или URL изображения объявления (заполняется на Этапе IV). */
+    /** Публичный URL изображения объявления (например {@code /images/ads/{uuid}_photo.jpg}). */
     @Size(max = ApiConstants.IMAGE_PATH_MAX_LENGTH)
     @Column(length = ApiConstants.IMAGE_PATH_MAX_LENGTH)
     private String image;

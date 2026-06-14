@@ -11,12 +11,13 @@ API реализовано по [OpenAPI-спецификации](openapi.yaml)
 - CRUD для объявлений и комментариев;
 - загрузка и отображение изображений объявлений и аватаров.
 
-### Текущий статус — Этап II
+### Текущий статус — Этап III
 
-- подключена PostgreSQL через Liquibase-миграции;
-- созданы сущности `User`, `Ad`, `Comment` с LAZY-связями;
-- реализованы репозитории, MapStruct-мапперы и сервисы маппинга Entity ↔ DTO;
-- контроллеры пока возвращают заглушки (подключение сервисов — Этап III).
+- аутентификация через PostgreSQL (`CustomUserDetailsService` + BCrypt);
+- контроллеры подключены к сервисам и репозиториям;
+- проверка прав: USER — только свои объявления/комментарии, ADMIN — любые;
+- обработка 401/403/404 через `GlobalExceptionHandler`;
+- загрузка изображений — заглушки (полная реализация на Этапе IV).
 
 ## Стек технологий
 
@@ -94,6 +95,11 @@ docker run -p 3000:3000 --rm ghcr.io/dmitry-bizin/front-react-avito:v1.21
 
 Тесты используют профиль `test` с H2 in-memory (Liquibase отключён).
 
+| Тип | Пакет | Назначение |
+|-----|-------|------------|
+| Unit | `mapper/`, `security/`, `service/impl/` | Мапперы, AccessChecker, AuthService |
+| Integration | `controller/`, `service/` | MockMvc + H2: Security, CRUD, права доступа |
+
 ## Документация API
 
 | URL | Описание |
@@ -108,9 +114,12 @@ src/main/java/ru/skypro/homework/
 ├── entity/          # JPA-сущности (User, Ad, Comment)
 ├── repository/      # Spring Data JPA репозитории
 ├── mapper/          # MapStruct-мапперы Entity ↔ DTO
-├── service/         # Сервисы с маппингом и CRUD
+├── service/         # Интерфейсы сервисов
+│   └── impl/        # AdServiceImpl, UserServiceImpl, CommentServiceImpl, AuthServiceImpl
+├── security/        # UserDetailsService, AccessChecker
+├── exception/       # GlobalExceptionHandler
 ├── dto/             # DTO по OpenAPI
-└── controller/      # REST-контроллеры
+└── controller/      # AdsController, CommentsController, UserController, AuthController
 
 src/main/resources/db/changelog/   # Liquibase-миграции
 ```
@@ -134,7 +143,7 @@ ad (pk, title, description, price, image, author_id)
 |------|------------|--------|
 | I | DTO, контроллеры | ✅ |
 | II | Сущности, репозитории, мапперы, БД | ✅ |
-| III | Сервисы, подключение к контроллерам | ⏳ |
+| III | Auth, сервисы, контроллеры + БД | ✅ |
 | IV | Работа с картинками, демо | ⏳ |
 
 ## Исходный шаблон

@@ -30,6 +30,7 @@ import ru.skypro.homework.dto.Role;
 @Table(name = "users")
 public class User {
 
+    /** Первичный ключ пользователя. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -63,7 +64,7 @@ public class User {
     @Column(nullable = false, length = 10)
     private Role role;
 
-    /** Путь или URL изображения аватара (заполняется на Этапе IV). */
+    /** Публичный URL аватара пользователя (например {@code /images/avatars/{uuid}_avatar.jpg}). */
     @Size(max = ApiConstants.IMAGE_PATH_MAX_LENGTH)
     @Column(length = ApiConstants.IMAGE_PATH_MAX_LENGTH)
     private String image;

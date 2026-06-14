@@ -1,9 +1,13 @@
 package ru.skypro.homework.mapper;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
+import ru.skypro.homework.dto.Ads;
 import ru.skypro.homework.dto.CreateOrUpdateAd;
 import ru.skypro.homework.dto.ExtendedAd;
 import ru.skypro.homework.entity.User;
@@ -30,7 +34,22 @@ public interface AdMapper {
     ExtendedAd toExtendedDto(ru.skypro.homework.entity.Ad ad);
 
     /**
-     * Создаёт сущность объявления; изображение задаётся отдельно на Этапе IV.
+     * Формирует обёртку {@link Ads} со счётчиком и списком кратких DTO.
+     */
+    default Ads toAdsDto(List<ru.skypro.homework.entity.Ad> ads) {
+        Ads result = new Ads();
+        if (ads == null || ads.isEmpty()) {
+            result.setCount(0);
+            return result;
+        }
+        List<ru.skypro.homework.dto.Ad> dtos = ads.stream().map(this::toDto).collect(Collectors.toList());
+        result.setCount(dtos.size());
+        result.setResults(dtos);
+        return result;
+    }
+
+    /**
+     * Создаёт сущность объявления; путь к изображению задаётся в сервисе после сохранения файла.
      */
     @Mapping(target = "pk", ignore = true)
     @Mapping(target = "image", ignore = true)
