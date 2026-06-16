@@ -56,10 +56,10 @@ public final class ApiConstants {
     public static final int AD_TITLE_MAX_LENGTH = 32;
 
     /** Минимальная длина описания объявления. */
-    public static final int AD_DESCRIPTION_MIN_LENGTH = 8;
+    public static final int AD_DESCRIPTION_MIN_LENGTH = 6;
 
     /** Максимальная длина описания объявления. */
-    public static final int AD_DESCRIPTION_MAX_LENGTH = 64;
+    public static final int AD_DESCRIPTION_MAX_LENGTH = 300;
 
     /** Минимально допустимая цена объявления. */
     public static final int AD_PRICE_MIN = 0;
@@ -71,7 +71,7 @@ public final class ApiConstants {
     public static final int COMMENT_TEXT_MIN_LENGTH = 8;
 
     /** Максимальная длина текста комментария. */
-    public static final int COMMENT_TEXT_MAX_LENGTH = 64;
+    public static final int COMMENT_TEXT_MAX_LENGTH = 300;
 
     /** Максимальная длина имени файла при сохранении на диск (без UUID-префикса). */
     public static final int IMAGE_FILENAME_MAX_LENGTH = 100;
