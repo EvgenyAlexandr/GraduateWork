@@ -1,8 +1,10 @@
 package ru.skypro.homework.mapper;
 
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import ru.skypro.homework.dto.Register;
 import ru.skypro.homework.dto.UpdateUser;
@@ -29,7 +31,9 @@ public interface UserMapper {
 
     /**
      * Обновляет редактируемые поля профиля; пароль, роль и email не изменяются.
+     * Поля {@code null} в DTO не перезаписывают значения в сущности.
      */
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "email", ignore = true)
     @Mapping(target = "password", ignore = true)

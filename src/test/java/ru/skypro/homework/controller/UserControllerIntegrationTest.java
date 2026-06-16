@@ -2,6 +2,7 @@ package ru.skypro.homework.controller;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -78,6 +79,50 @@ class UserControllerIntegrationTest {
         User updated = userRepository.findByEmail(IntegrationTestData.USER_EMAIL).orElseThrow();
         org.assertj.core.api.Assertions.assertThat(passwordEncoder.matches("newpass123", updated.getPassword()))
                 .isTrue();
+    }
+
+    @Test
+    @DisplayName("PATCH /users/me обновляет имя и фамилию пользователя")
+    void updateUser_changesFirstAndLastName_returnsOk() throws Exception {
+        String body = "{\"firstName\":\"Petr\",\"lastName\":\"Petrov\",\"phone\":\"+79991234567\"}";
+
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .with(httpBasic(IntegrationTestData.USER_EMAIL, IntegrationTestData.PASSWORD)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("Petr"))
+                .andExpect(jsonPath("$.lastName").value("Petrov"));
+    }
+
+    @Test
+    @DisplayName("PATCH /users/me нормализует телефон с пробелами и скобками")
+    void updateUser_normalizesPhoneFormat_returnsOk() throws Exception {
+        String body = "{\"firstName\":\"Ivan\",\"lastName\":\"Ivanov\",\"phone\":\"+7 (999) 123-45-67\"}";
+
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .with(httpBasic(IntegrationTestData.USER_EMAIL, IntegrationTestData.PASSWORD)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.phone").value("+79991234567"));
+    }
+
+    @Test
+    @DisplayName("PATCH /users/me с короткой фамилией из регистрации (2 символа) сохраняет новое имя")
+    void updateUser_withTwoCharLastNameFromRegistration_returnsOk() throws Exception {
+        user.setLastName("Po");
+        userRepository.save(user);
+
+        String body = "{\"firstName\":\"Petr\",\"lastName\":\"Po\",\"phone\":\"+79991234567\"}";
+
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .with(httpBasic(IntegrationTestData.USER_EMAIL, IntegrationTestData.PASSWORD)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("Petr"))
+                .andExpect(jsonPath("$.lastName").value("Po"));
     }
 
     @Test

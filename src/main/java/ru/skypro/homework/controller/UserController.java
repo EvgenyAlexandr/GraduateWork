@@ -99,7 +99,7 @@ public class UserController {
                     schema = @Schema(implementation = UpdateUser.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized")
     @PatchMapping("/me")
-    public ResponseEntity<UpdateUser> updateUser(@Valid @RequestBody UpdateUser updateUser,
+    public ResponseEntity<UpdateUser> updateUser(@RequestBody UpdateUser updateUser,
             Authentication authentication) {
         ru.skypro.homework.entity.User currentUser = securityUtils.getCurrentUser(authentication);
         return userService.updateUser(currentUser.getId(), updateUser)
