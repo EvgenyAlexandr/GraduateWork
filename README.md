@@ -1,5 +1,5 @@
 # Ads — Backend платформы по перепродаже вещей
-  
+
 Backend-приложение для платформы по перепродаже вещей. Дипломный проект курса Java-разработчик SkyPro.
 
 API реализовано по [OpenAPI-спецификации](openapi.yaml) и совместимо с [готовым фронтендом](https://github.com/skypro-backend/example-for-graduate-work).
@@ -11,13 +11,38 @@ API реализовано по [OpenAPI-спецификации](openapi.yaml)
 - CRUD для объявлений и комментариев;
 - загрузка и отображение изображений объявлений и аватаров.
 
-### Текущий статус — Этап III
+### Текущий статус — Этап IV ✅
 
 - аутентификация через PostgreSQL (`CustomUserDetailsService` + BCrypt);
 - контроллеры подключены к сервисам и репозиториям;
 - проверка прав: USER — только свои объявления/комментарии, ADMIN — любые;
 - обработка 401/403/404 через `GlobalExceptionHandler`;
-- загрузка изображений — заглушки (полная реализация на Этапе IV).
+- **изображения**: сохранение на диск, URL в БД, публичная раздача по `/images/**`.
+
+## Работа с изображениями (Этап IV)
+
+Файлы хранятся на диске (каталог задаётся в `application.properties`), в PostgreSQL сохраняется только URL.
+
+| Действие | Эндпоинт | Описание |
+|----------|----------|----------|
+| Создать объявление с фото | `POST /ads` (multipart) | Поле `image` + `properties` (JSON) |
+| Обновить фото объявления | `PATCH /ads/{id}/image` | Ответ: байты изображения |
+| Обновить аватар | `PATCH /users/me/image` | Multipart, поле `image` |
+| Получить байты файла | `GET /images/ads/{файл}` | **Без авторизации** |
+| Получить аватар | `GET /images/avatars/{файл}` | **Без авторизации** |
+| URL в JSON | поля `image`, `authorImage` | Путь с корня, напр. `/images/ads/uuid_photo.jpg` |
+
+Фронтенд собирает полный адрес: `http://localhost:8080` + значение из поля `image`.
+
+**Конфигурация** (`application.properties`):
+
+```properties
+app.storage.base-path=images
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+```
+
+Каталог `images/` добавлен в `.gitignore` — загруженные файлы не попадают в git.
 
 ## Стек технологий
 
@@ -97,8 +122,8 @@ docker run -p 3000:3000 --rm ghcr.io/dmitry-bizin/front-react-avito:v1.21
 
 | Тип | Пакет | Назначение |
 |-----|-------|------------|
-| Unit | `mapper/`, `security/`, `service/impl/` | Мапперы, AccessChecker, AuthService |
-| Integration | `controller/`, `service/` | MockMvc + H2: Security, CRUD, права доступа |
+| Unit | `mapper/`, `security/`, `service/`, `util/` | Мапперы, AccessChecker, ImageStorageService |
+| Integration | `controller/`, `service/` | MockMvc + H2: Security, CRUD, загрузка изображений |
 
 ## Документация API
 
@@ -114,14 +139,17 @@ src/main/java/ru/skypro/homework/
 ├── entity/          # JPA-сущности (User, Ad, Comment)
 ├── repository/      # Spring Data JPA репозитории
 ├── mapper/          # MapStruct-мапперы Entity ↔ DTO
-├── service/         # Интерфейсы сервисов
+├── service/         # Интерфейсы сервисов + ImageStorageService
 │   └── impl/        # AdServiceImpl, UserServiceImpl, CommentServiceImpl, AuthServiceImpl
+├── config/          # WebSecurityConfig, WebConfig (раздача /images/**)
 ├── security/        # UserDetailsService, AccessChecker
 ├── exception/       # GlobalExceptionHandler
+├── util/            # ImageUrlUtils (кодирование URL для браузера)
 ├── dto/             # DTO по OpenAPI
 └── controller/      # AdsController, CommentsController, UserController, AuthController
 
 src/main/resources/db/changelog/   # Liquibase-миграции
+images/                            # Загруженные файлы (не в git)
 ```
 
 ## Модель данных
@@ -137,6 +165,8 @@ ad (pk, title, description, price, image, author_id)
   └── comment.ad_pk
 ```
 
+Поле `image` в `users` и `ad` хранит URL вида `/images/avatars/...` или `/images/ads/...`.
+
 ## Этапы разработки
 
 | Этап | Содержание | Статус |
@@ -144,7 +174,8 @@ ad (pk, title, description, price, image, author_id)
 | I | DTO, контроллеры | ✅ |
 | II | Сущности, репозитории, мапперы, БД | ✅ |
 | III | Auth, сервисы, контроллеры + БД | ✅ |
-| IV | Работа с картинками, демо | ⏳ |
+| IV | Работа с картинками | ✅ |
+
 
 ## Исходный шаблон
 

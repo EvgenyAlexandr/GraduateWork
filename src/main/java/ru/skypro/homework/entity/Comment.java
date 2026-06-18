@@ -37,6 +37,7 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer pk;
 
+    /** Текст комментария. */
     @NotBlank
     @Size(min = ApiConstants.COMMENT_TEXT_MIN_LENGTH, max = ApiConstants.COMMENT_TEXT_MAX_LENGTH)
     @Column(nullable = false, length = ApiConstants.COMMENT_TEXT_MAX_LENGTH)

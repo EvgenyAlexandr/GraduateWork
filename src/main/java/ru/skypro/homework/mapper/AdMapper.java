@@ -22,6 +22,7 @@ public interface AdMapper {
      * Краткое DTO: идентификатор автора берётся из связанной сущности {@link User}.
      */
     @Mapping(target = "author", source = "author.id")
+    @Mapping(target = "image", expression = "java(ru.skypro.homework.util.ImageUrlUtils.encodeForBrowser(ad.getImage()))")
     ru.skypro.homework.dto.Ad toDto(ru.skypro.homework.entity.Ad ad);
 
     /**
@@ -31,6 +32,7 @@ public interface AdMapper {
     @Mapping(target = "authorLastName", source = "author.lastName")
     @Mapping(target = "email", source = "author.email")
     @Mapping(target = "phone", source = "author.phone")
+    @Mapping(target = "image", expression = "java(ru.skypro.homework.util.ImageUrlUtils.encodeForBrowser(ad.getImage()))")
     ExtendedAd toExtendedDto(ru.skypro.homework.entity.Ad ad);
 
     /**

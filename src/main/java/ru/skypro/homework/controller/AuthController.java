@@ -19,6 +19,9 @@ import ru.skypro.homework.service.AuthService;
 
 /**
  * REST-контроллер регистрации и авторизации пользователей.
+ * <p>
+ * Эндпоинты {@code POST /register} и {@code POST /login} доступны без Basic Auth;
+ * фактическая аутентификация для остальных запросов выполняется через заголовок Authorization.
  */
 @CrossOrigin(origins = ApiConstants.CORS_ORIGIN)
 @RestController

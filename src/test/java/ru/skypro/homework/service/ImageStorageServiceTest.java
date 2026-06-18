@@ -51,4 +51,51 @@ class ImageStorageServiceTest {
 
         assertThat(url).startsWith("/images/avatars/");
     }
+
+    @Test
+    @DisplayName("saveAdImage заменяет пробелы в имени файла и возвращает URL без пробелов")
+    void saveAdImage_replacesSpacesInFilename() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "image", "my photo.jpg", "image/jpeg", "jpeg-content".getBytes());
+
+        String url = imageStorageService.saveAdImage(file);
+
+        assertThat(url).doesNotContain(" ");
+        assertThat(url).contains("my_photo.jpg");
+        assertThat(imageStorageService.readByPublicUrl(url)).isEqualTo("jpeg-content".getBytes());
+    }
+
+    @Test
+    @DisplayName("deleteByPublicUrl удаляет сохранённый файл с диска")
+    void deleteByPublicUrl_removesFile() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "image", "photo.jpg", "image/jpeg", "jpeg-content".getBytes());
+
+        String url = imageStorageService.saveAdImage(file);
+        assertThat(imageStorageService.readByPublicUrl(url)).isNotEmpty();
+
+        imageStorageService.deleteByPublicUrl(url);
+
+        assertThat(imageStorageService.readByPublicUrl(url)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("deleteByPublicUrl безопасно обрабатывает null и неизвестный URL")
+    void deleteByPublicUrl_ignoresInvalidUrls() {
+        imageStorageService.deleteByPublicUrl(null);
+        imageStorageService.deleteByPublicUrl("");
+        imageStorageService.deleteByPublicUrl("/ads/image/1");
+    }
+
+    @Test
+    void readByPublicUrl_decodesEncodedUrl() throws Exception {
+        Path adsDir = tempDir.resolve("ads");
+        Files.createDirectories(adsDir);
+        Path file = adsDir.resolve("legacy file.jpg");
+        Files.write(file, "legacy".getBytes());
+
+        byte[] content = imageStorageService.readByPublicUrl("/images/ads/legacy%20file.jpg");
+
+        assertThat(content).isEqualTo("legacy".getBytes());
+    }
 }

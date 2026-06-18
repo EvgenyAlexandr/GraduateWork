@@ -20,7 +20,7 @@ public interface CommentMapper {
      */
     @Mapping(target = "author", source = "author.id")
     @Mapping(target = "authorFirstName", source = "author.firstName")
-    @Mapping(target = "authorImage", source = "author.image")
+    @Mapping(target = "authorImage", expression = "java(ru.skypro.homework.util.ImageUrlUtils.encodeForBrowser(comment.getAuthor() != null ? comment.getAuthor().getImage() : null))")
     @Mapping(target = "createdAt", expression = "java(toEpochMilli(comment.getCreatedAt()))")
     ru.skypro.homework.dto.Comment toDto(ru.skypro.homework.entity.Comment comment);
 

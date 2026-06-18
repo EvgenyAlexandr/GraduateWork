@@ -91,6 +91,7 @@ public class AdServiceImpl implements AdService {
     public void deleteAd(Integer id, User currentUser) {
         Ad ad = findAdOrThrow(id);
         accessChecker.checkOwnerOrAdmin(ad.getAuthor(), currentUser);
+        imageStorageService.deleteByPublicUrl(ad.getImage());
         adRepository.delete(ad);
     }
 
@@ -100,6 +101,7 @@ public class AdServiceImpl implements AdService {
     public byte[] updateAdImage(Integer id, MultipartFile image, User currentUser) {
         Ad ad = findAdOrThrow(id);
         accessChecker.checkOwnerOrAdmin(ad.getAuthor(), currentUser);
+        imageStorageService.deleteByPublicUrl(ad.getImage());
         String imageUrl = imageStorageService.saveAdImage(image);
         ad.setImage(imageUrl);
         adRepository.save(ad);

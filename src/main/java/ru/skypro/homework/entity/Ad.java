@@ -37,16 +37,19 @@ public class Ad {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer pk;
 
+    /** Заголовок объявления. */
     @NotBlank
     @Size(min = ApiConstants.AD_TITLE_MIN_LENGTH, max = ApiConstants.AD_TITLE_MAX_LENGTH)
     @Column(nullable = false, length = ApiConstants.AD_TITLE_MAX_LENGTH)
     private String title;
 
+    /** Подробное описание товара. */
     @NotBlank
     @Size(min = ApiConstants.AD_DESCRIPTION_MIN_LENGTH, max = ApiConstants.AD_DESCRIPTION_MAX_LENGTH)
     @Column(nullable = false, length = ApiConstants.AD_DESCRIPTION_MAX_LENGTH)
     private String description;
 
+    /** Цена в рублях. */
     @NotNull
     @Min(ApiConstants.AD_PRICE_MIN)
     @Max(ApiConstants.AD_PRICE_MAX)

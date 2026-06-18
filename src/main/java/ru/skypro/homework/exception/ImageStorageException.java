@@ -1,7 +1,7 @@
 package ru.skypro.homework.exception;
 
 /**
- * Ошибка при сохранении или чтении файла изображения на диске.
+ * Ошибка при сохранении, чтении или удалении файла изображения на диске.
  */
 public class ImageStorageException extends RuntimeException {
 

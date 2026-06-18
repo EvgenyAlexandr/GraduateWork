@@ -18,6 +18,7 @@ public interface UserMapper {
     /**
      * Преобразует сущность пользователя в DTO для ответа API.
      */
+    @Mapping(target = "image", expression = "java(ru.skypro.homework.util.ImageUrlUtils.encodeForBrowser(user.getImage()))")
     ru.skypro.homework.dto.User toDto(ru.skypro.homework.entity.User user);
 
     /**

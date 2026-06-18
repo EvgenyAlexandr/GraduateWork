@@ -55,7 +55,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Ошибка записи или чтения файла изображения на диске.
+     * Ошибка сохранения, чтения или удаления файла изображения на диске.
      */
     @ExceptionHandler(ImageStorageException.class)
     public ResponseEntity<Void> handleImageStorage(ImageStorageException exception) {

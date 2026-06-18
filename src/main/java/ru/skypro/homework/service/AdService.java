@@ -72,7 +72,7 @@ public interface AdService {
     Ad updateAd(Integer id, CreateOrUpdateAd createOrUpdateAd, User currentUser);
 
     /**
-     * Удаляет объявление с проверкой прав владельца или ADMIN.
+     * Удаляет объявление и связанный файл изображения с проверкой прав владельца или ADMIN.
      *
      * @param id          первичный ключ объявления
      * @param currentUser текущий пользователь
@@ -80,7 +80,7 @@ public interface AdService {
     void deleteAd(Integer id, User currentUser);
 
     /**
-     * Заменяет изображение объявления и возвращает байты сохранённого файла.
+     * Заменяет изображение объявления: удаляет предыдущий файл с диска и возвращает байты нового.
      *
      * @param id          первичный ключ объявления
      * @param image       новый файл изображения

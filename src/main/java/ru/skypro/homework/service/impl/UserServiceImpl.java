@@ -130,6 +130,7 @@ public class UserServiceImpl implements UserService {
     public User updateUserImage(Integer id, MultipartFile image) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден: " + id));
+        imageStorageService.deleteByPublicUrl(user.getImage());
         user.setImage(imageStorageService.saveAvatarImage(image));
         return userRepository.save(user);
     }
