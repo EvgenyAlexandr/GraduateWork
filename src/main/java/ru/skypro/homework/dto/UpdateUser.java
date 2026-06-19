@@ -9,7 +9,7 @@ import ru.skypro.homework.constant.ApiConstants;
  * <p>
  * Соответствует схеме {@code UpdateUser} из {@code openapi.yaml}. Используется в {@code PATCH /users/me}.
  * Валидация выполняется в {@link ru.skypro.homework.service.impl.UserServiceImpl}, а не через {@code @Valid},
- * чтобы корректно обрабатывать данные из фронтенда (пробелы в телефоне, короткие имена после регистрации).
+ * чтобы корректно обрабатывать частичное обновление и нормализацию телефона.
  */
 @Data
 @Schema(name = "UpdateUser", description = "Данные для обновления пользователя")

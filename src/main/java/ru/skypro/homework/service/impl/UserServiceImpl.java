@@ -68,6 +68,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public User createUser(Register register) {
         User user = userMapper.toEntity(register);
+        user.setPhone(normalizePhone(register.getPhone()));
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
@@ -78,7 +79,7 @@ public class UserServiceImpl implements UserService {
     public Optional<User> updateUser(Integer id, UpdateUser updateUser) {
         return userRepository.findById(id).map(user -> {
             UpdateUser merged = mergeUpdateUser(updateUser, user);
-            validateUpdateUser(merged);
+            validateUpdateUser(merged, updateUser);
             userMapper.updateEntityFromDto(merged, user);
             return userRepository.save(user);
         });
@@ -140,24 +141,54 @@ public class UserServiceImpl implements UserService {
      */
     private UpdateUser mergeUpdateUser(UpdateUser updateUser, User user) {
         UpdateUser merged = new UpdateUser();
-        merged.setFirstName(trimToNull(
-                updateUser.getFirstName() != null ? updateUser.getFirstName() : user.getFirstName()));
-        merged.setLastName(trimToNull(
-                updateUser.getLastName() != null ? updateUser.getLastName() : user.getLastName()));
-        merged.setPhone(normalizePhone(
-                updateUser.getPhone() != null ? updateUser.getPhone() : user.getPhone()));
+        merged.setFirstName(trimToNull(resolveField(updateUser.getFirstName(), user.getFirstName())));
+        merged.setLastName(trimToNull(resolveField(updateUser.getLastName(), user.getLastName())));
+        merged.setPhone(normalizePhone(resolveField(updateUser.getPhone(), user.getPhone())));
         return merged;
     }
 
     /**
-     * Проверяет итоговые значения профиля после слияния с данными из БД.
+     * Берёт значение из запроса, если оно не пустое; иначе — текущее из БД.
+     * Пустая строка от фронтенда не должна затирать уже сохранённые данные.
      */
-    private void validateUpdateUser(UpdateUser updateUser) {
-        validateName(updateUser.getFirstName(), "имя",
-                ApiConstants.FIRST_NAME_MIN_LENGTH, ApiConstants.UPDATE_FIRST_NAME_MAX_LENGTH);
-        validateName(updateUser.getLastName(), "фамилия",
-                ApiConstants.LAST_NAME_MIN_LENGTH, ApiConstants.UPDATE_LAST_NAME_MAX_LENGTH);
-        validatePhone(updateUser.getPhone());
+    private String resolveField(String incoming, String existing) {
+        if (incoming == null || incoming.isBlank()) {
+            return existing;
+        }
+        return incoming;
+    }
+
+    /**
+     * Проверяет итоговые значения профиля после слияния с данными из БД.
+     * <p>
+     * Явно переданные поля проверяются по лимитам {@code UpdateUser} (3–10).
+     * Поля, взятые из БД без изменения, — по лимитам {@code Register} (2–16).
+     */
+    private void validateUpdateUser(UpdateUser merged, UpdateUser incoming) {
+        validateName(merged.getFirstName(), "имя",
+                limitsFor(incoming.getFirstName(),
+                        ApiConstants.UPDATE_FIRST_NAME_MIN_LENGTH, ApiConstants.UPDATE_FIRST_NAME_MAX_LENGTH,
+                        ApiConstants.FIRST_NAME_MIN_LENGTH, ApiConstants.FIRST_NAME_MAX_LENGTH));
+        validateName(merged.getLastName(), "фамилия",
+                limitsFor(incoming.getLastName(),
+                        ApiConstants.UPDATE_LAST_NAME_MIN_LENGTH, ApiConstants.UPDATE_LAST_NAME_MAX_LENGTH,
+                        ApiConstants.LAST_NAME_MIN_LENGTH, ApiConstants.LAST_NAME_MAX_LENGTH));
+        validatePhone(merged.getPhone());
+    }
+
+    private int[] limitsFor(String incoming, int updateMin, int updateMax, int registerMin, int registerMax) {
+        if (isProvided(incoming)) {
+            return new int[]{updateMin, updateMax};
+        }
+        return new int[]{registerMin, registerMax};
+    }
+
+    private boolean isProvided(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    private void validateName(String value, String fieldName, int[] limits) {
+        validateName(value, fieldName, limits[0], limits[1]);
     }
 
     private void validateName(String value, String fieldName, int minLength, int maxLength) {
@@ -190,14 +221,17 @@ public class UserServiceImpl implements UserService {
         if (trimmed.isEmpty()) {
             return trimmed;
         }
-        String digitsOnly = trimmed.replaceAll("[\\s\\-()]", "");
+        String digitsOnly = trimmed.replaceAll("[\\s\\-+()]", "");
         if (digitsOnly.startsWith("8") && digitsOnly.length() == 11) {
             return "+7" + digitsOnly.substring(1);
         }
         if (digitsOnly.startsWith("7") && digitsOnly.length() == 11) {
             return "+" + digitsOnly;
         }
-        return digitsOnly;
+        if (digitsOnly.length() == 10) {
+            return "+7" + digitsOnly;
+        }
+        return trimmed.startsWith("+") ? trimmed : "+" + digitsOnly;
     }
 
     private String trimToNull(String value) {

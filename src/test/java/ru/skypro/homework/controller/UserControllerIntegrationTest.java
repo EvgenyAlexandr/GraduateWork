@@ -109,20 +109,105 @@ class UserControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("PATCH /users/me с короткой фамилией из регистрации (2 символа) сохраняет новое имя")
-    void updateUser_withTwoCharLastNameFromRegistration_returnsOk() throws Exception {
-        user.setLastName("Po");
+    @DisplayName("PATCH /users/me с данными профиля на кириллице возвращает 200 OK")
+    void updateUser_withCyrillicProfile_returnsOk() throws Exception {
+        user.setFirstName("Стиляга");
+        user.setLastName("Московский");
+        user.setPhone("+79000000000");
         userRepository.save(user);
 
-        String body = "{\"firstName\":\"Petr\",\"lastName\":\"Po\",\"phone\":\"+79991234567\"}";
+        String body = "{\"firstName\":\"Стиляга\",\"lastName\":\"Московский\",\"phone\":\"+79000000000\"}";
 
         mockMvc.perform(patch("/users/me")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body)
                         .with(httpBasic(IntegrationTestData.USER_EMAIL, IntegrationTestData.PASSWORD)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstName").value("Petr"))
-                .andExpect(jsonPath("$.lastName").value("Po"));
+                .andExpect(jsonPath("$.firstName").value("Стиляга"))
+                .andExpect(jsonPath("$.lastName").value("Московский"))
+                .andExpect(jsonPath("$.phone").value("+79000000000"));
+    }
+
+    @Test
+    @DisplayName("PATCH /users/me обновляет только телефон при коротком имени из регистрации в БД")
+    void updateUser_updatePhoneOnly_keepsTwoCharNameFromRegistration_returnsOk() throws Exception {
+        user.setFirstName("Al");
+        user.setLastName("Po");
+        userRepository.save(user);
+
+        String body = "{\"phone\":\"+79991234567\"}";
+
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .with(httpBasic(IntegrationTestData.USER_EMAIL, IntegrationTestData.PASSWORD)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("Al"))
+                .andExpect(jsonPath("$.lastName").value("Po"))
+                .andExpect(jsonPath("$.phone").value("+79991234567"));
+    }
+
+    @Test
+    @DisplayName("PATCH /users/me с явно переданной фамилией короче 3 символов возвращает 400")
+    void updateUser_withTooShortLastName_returnsBadRequest() throws Exception {
+        String body = "{\"firstName\":\"Petr\",\"lastName\":\"Po\",\"phone\":\"+79991234567\"}";
+
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .with(httpBasic(IntegrationTestData.USER_EMAIL, IntegrationTestData.PASSWORD)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PATCH /users/me принимает имя длиной до 10 символов (лимит UpdateUser)")
+    void updateUser_withMaxLengthName_returnsOk() throws Exception {
+        String body = "{\"firstName\":\"Christophe\",\"lastName\":\"Ivanov\",\"phone\":\"+79991234567\"}";
+
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .with(httpBasic(IntegrationTestData.USER_EMAIL, IntegrationTestData.PASSWORD)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value("Christophe"));
+    }
+
+    @Test
+    @DisplayName("PATCH /users/me с именем длиннее 10 символов возвращает 400")
+    void updateUser_withTooLongName_returnsBadRequest() throws Exception {
+        String body = "{\"firstName\":\"Александрович\",\"lastName\":\"Ivanov\",\"phone\":\"+79991234567\"}";
+
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .with(httpBasic(IntegrationTestData.USER_EMAIL, IntegrationTestData.PASSWORD)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PATCH /users/me с пустым телефоном в теле запроса берёт номер из БД")
+    void updateUser_withBlankPhone_usesStoredPhone_returnsOk() throws Exception {
+        String body = "{\"firstName\":\"Petr\",\"lastName\":\"Petrov\",\"phone\":\"\"}";
+
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .with(httpBasic(IntegrationTestData.USER_EMAIL, IntegrationTestData.PASSWORD)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.phone").value(IntegrationTestData.PHONE));
+    }
+
+    @Test
+    @DisplayName("PATCH /users/me принимает телефон с пробелом между последними группами цифр")
+    void updateUser_withSpacedPhoneFormat_returnsOk() throws Exception {
+        String body = "{\"firstName\":\"Ivan\",\"lastName\":\"Ivanov\",\"phone\":\"+7(999)123 45 67\"}";
+
+        mockMvc.perform(patch("/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                        .with(httpBasic(IntegrationTestData.USER_EMAIL, IntegrationTestData.PASSWORD)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.phone").value("+79991234567"));
     }
 
     @Test
