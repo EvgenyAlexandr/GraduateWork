@@ -83,6 +83,19 @@ class ImageControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("GET /images/avatars/{file} отдаёт аватар с кириллическим исходным именем файла")
+    void getAvatarImage_withCyrillicOriginalFilename_returnsFileBytes() throws Exception {
+        MockMultipartFile avatar = new MockMultipartFile(
+                "image", "Сттийк.jpg", MediaType.IMAGE_JPEG_VALUE, JPEG_BYTES);
+        String imageUrl = imageStorageService.saveAvatarImage(avatar);
+        String relativePath = imageUrl.substring("/images/".length());
+
+        mockMvc.perform(get("/images/" + relativePath))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(JPEG_BYTES));
+    }
+
+    @Test
     @DisplayName("PATCH /users/me/image сохраняет аватар и GET /users/me возвращает URL")
     void updateUserImage_savesAvatarAndReturnsUrlInProfile() throws Exception {
         MockMultipartFile avatar = new MockMultipartFile(
@@ -95,15 +108,20 @@ class ImageControllerIntegrationTest {
                             request.setMethod("PATCH");
                             return request;
                         }))
-                .andExpect(status().isOk());
-
-        mockMvc.perform(get("/users/me")
-                        .with(httpBasic(IntegrationTestData.USER_EMAIL, IntegrationTestData.PASSWORD)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.image").value(startsWith("/images/avatars/")));
 
         User updated = userRepository.findByEmail(IntegrationTestData.USER_EMAIL).orElseThrow();
         assertThat(updated.getImage()).startsWith("/images/avatars/");
+
+        mockMvc.perform(get("/users/me")
+                        .with(httpBasic(IntegrationTestData.USER_EMAIL, IntegrationTestData.PASSWORD)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.image").value(updated.getImage()));
+
+        mockMvc.perform(get(updated.getImage()))
+                .andExpect(status().isOk())
+                .andExpect(content().bytes(JPEG_BYTES));
     }
 
     @Test

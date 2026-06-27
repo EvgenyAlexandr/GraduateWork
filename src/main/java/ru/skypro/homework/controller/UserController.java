@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -115,13 +115,15 @@ public class UserController {
      * @return {@code 200 OK} при успешном сохранении
      */
     @Operation(summary = "Обновление аватара авторизованного пользователя", operationId = "updateUserImage")
-    @ApiResponse(responseCode = "200", description = "OK")
+    @ApiResponse(responseCode = "200", description = "OK",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                    schema = @Schema(implementation = User.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized")
     @PatchMapping(value = "/me/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Void> updateUserImage(@RequestParam("image") MultipartFile image,
+    public ResponseEntity<User> updateUserImage(@RequestPart("image") MultipartFile image,
             Authentication authentication) {
         ru.skypro.homework.entity.User currentUser = securityUtils.getCurrentUser(authentication);
-        userService.updateUserImage(currentUser.getId(), image);
-        return ResponseEntity.ok().build();
+        ru.skypro.homework.entity.User updated = userService.updateUserImage(currentUser.getId(), image);
+        return ResponseEntity.ok(userService.toDto(updated));
     }
 }

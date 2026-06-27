@@ -13,17 +13,17 @@ public final class ApiConstants {
     /** Регулярное выражение для проверки российского номера телефона. */
     public static final String PHONE_PATTERN = "\\+7\\s?\\(?\\d{3}\\)?\\s?\\d{3}-?\\d{2}-?\\d{2}";
 
-    /** Минимальная длина пароля. */
-    public static final int PASSWORD_MIN_LENGTH = 8;
-
-    /** Максимальная длина пароля. */
-    public static final int PASSWORD_MAX_LENGTH = 16;
-
     /** Минимальная длина логина. */
     public static final int USERNAME_MIN_LENGTH = 4;
 
     /** Максимальная длина логина. */
     public static final int USERNAME_MAX_LENGTH = 32;
+
+    /** Минимальная длина пароля. */
+    public static final int PASSWORD_MIN_LENGTH = 8;
+
+    /** Максимальная длина пароля. */
+    public static final int PASSWORD_MAX_LENGTH = 16;
 
     /** Минимальная длина имени при регистрации. */
     public static final int FIRST_NAME_MIN_LENGTH = 2;

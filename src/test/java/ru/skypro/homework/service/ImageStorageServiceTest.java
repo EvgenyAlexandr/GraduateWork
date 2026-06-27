@@ -12,6 +12,8 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import ru.skypro.homework.config.StorageProperties;
+
 /**
  * Unit-тесты {@link ImageStorageService}: сохранение и чтение файлов на диске.
  */
@@ -24,8 +26,9 @@ class ImageStorageServiceTest {
 
     @BeforeEach
     void setUp() {
-        imageStorageService = new ImageStorageService();
-        ReflectionTestUtils.setField(imageStorageService, "basePath", tempDir.toString());
+        StorageProperties storageProperties = new StorageProperties();
+        ReflectionTestUtils.setField(storageProperties, "absoluteBasePath", tempDir);
+        imageStorageService = new ImageStorageService(storageProperties);
     }
 
     @Test
@@ -85,6 +88,19 @@ class ImageStorageServiceTest {
         imageStorageService.deleteByPublicUrl(null);
         imageStorageService.deleteByPublicUrl("");
         imageStorageService.deleteByPublicUrl("/ads/image/1");
+    }
+
+    @Test
+    @DisplayName("saveAvatarImage сохраняет кириллическое имя как ASCII и файл читается по URL")
+    void saveAvatarImage_sanitizesCyrillicFilename() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "image", "Сттийк.jpg", "image/jpeg", "avatar-bytes".getBytes());
+
+        String url = imageStorageService.saveAvatarImage(file);
+
+        assertThat(url).contains("image.jpg");
+        assertThat(url).doesNotContain("Ст");
+        assertThat(imageStorageService.readByPublicUrl(url)).isEqualTo("avatar-bytes".getBytes());
     }
 
     @Test
